@@ -1,0 +1,60 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <!-- 时间 -->
+    <dimen name="time_text_size">45px</dimen>
+    <dimen name="time_padding">12px</dimen>
+    <dimen name="date_text_size">30px</dimen>
+    <!-- 状态栏 -->
+    <dimen name="status_bar_height">120px</dimen>
+    <dimen name="status_bar_margin">7dp</dimen>
+    <!-- folder grid -->
+    <dimen name="folder_grid_marginTop">10dp</dimen>
+    <dimen name="folder_grid_textsize">20sp</dimen>
+    <dimen name="folder_grid_text_backgroundsize">150dp</dimen>
+    <dimen name="folder_grid_textup_backgroundsize">140dp</dimen>
+    <!-- folder list -->
+    <dimen name="folder_list_height">200dp</dimen>
+    <dimen name="folder_list_minheight">200dp</dimen>
+    <dimen name="folder_list_imageheight">50dp</dimen>
+    <dimen name="folder_list_foldername_textsize">30dp</dimen>
+    <dimen name="folder_list_marginLeft">100dp</dimen>
+    <dimen name="folder_list_foldernumber_textsize">20sp</dimen>
+    <!-- history list -->
+    <dimen name="history_list_marginLeft">20dp</dimen>
+    <!-- catalog -->
+    <dimen name="catalog_marginLeft">15dp</dimen>
+    <dimen name="catalog_marginTop">10dp</dimen>
+    <dimen name="catalog_divider_height">3dp</dimen>
+    <dimen name="catalog_button_marginLeft">17dp</dimen>
+    <dimen name="catalog_button_marginTop">70dp</dimen>
+    <!-- main -->
+    <dimen name="main_padding">5dp</dimen>
+    <dimen name="main_marginTop">50dp</dimen>
+    <dimen name="main_button_marginLeft">220dp</dimen>
+    <dimen name="main_button_marginLeft2">600dp</dimen>
+    <dimen name="main_button_marginLeft3">240dp</dimen>
+    <dimen name="main_marginTop2">300dp</dimen>
+    <dimen name="main_button_marginLeft4">25dp</dimen>
+    <!-- play -->
+    <dimen name="play_title_textsize">30sp</dimen>
+    <dimen name="play_currenttime_textsize">24sp</dimen>
+    <dimen name="play_button_marginRight">25dp</dimen>
+    <dimen name="play_operatebutton_width">150dp</dimen>
+    <dimen name="play_operatebutton_height">80dp</dimen>
+    <dimen name="play_operatebutton_marginLeft">1000dp</dimen>
+    <dimen name="play_operatebutton_marginTop">550dp</dimen>
+    <dimen name="play_operatebutton_marginLeft2">20dp</dimen>
+    <dimen name="play_subFrame_width">300dp</dimen>
+    <dimen name="play_subFrame_height">250dp</dimen>
+    <dimen name="play_operatebutton_marginLeft3">695dp</dimen>
+    <dimen name="play_operatebutton_marginTop2">390dp</dimen>
+    <!-- stream -->
+    <dimen name="stream_space">20dp</dimen>
+    <dimen name="stream_textsize">20sp</dimen>
+    <dimen name="stream_verticalSpacing">10dp</dimen>
+    <dimen name="stream_marginTop">20dp</dimen>
+
+</resources>

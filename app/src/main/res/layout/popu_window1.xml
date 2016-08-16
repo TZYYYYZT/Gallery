@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.percent.PercentRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/popupwindows"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <android.support.percent.PercentRelativeLayout
+        android:id="@+id/popup_1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_heightPercent="20%"
+        app:layout_widthPercent="100%">
+
+        <android.support.percent.PercentRelativeLayout
+
+            android:id="@+id/text_pic_information"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/Gray"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="80%">
+
+            <TextView
+                android:id="@+id/text_pic_name"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:padding="10dp"
+                android:text="图片名："
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="10%" />
+
+            <TextView
+                android:id="@+id/text_pic_nameContent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_toRightOf="@+id/text_pic_name"
+                android:padding="10dp"
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="90%" />
+
+            <TextView
+                android:id="@+id/text_pic_date"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_below="@+id/text_pic_name"
+                android:padding="10dp"
+                android:text="拍摄时间: "
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="10%" />
+
+            <TextView
+                android:id="@+id/text_pic_dateContent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_below="@+id/text_pic_nameContent"
+                android:layout_toRightOf="@+id/text_pic_date"
+                android:padding="10dp"
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="90%" />
+
+            <TextView
+                android:id="@+id/text_pic_size"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_below="@+id/text_pic_date"
+                android:padding="10dp"
+                android:text="图片大小: "
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="10%" />
+
+            <TextView
+                android:id="@+id/text_pic_sizeContent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_below="@+id/text_pic_dateContent"
+                android:layout_toRightOf="@+id/text_pic_size"
+                android:padding="10dp"
+                android:textSize="10sp"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="90%" />
+
+        </android.support.percent.PercentRelativeLayout>
+
+        <Button
+            android:id="@+id/btn_collection"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/text_pic_information"
+            android:background="@drawable/selector_btn_popup"
+            android:padding="10dp"
+            android:text="收藏"
+            android:textSize="20sp"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="20%" />
+    </android.support.percent.PercentRelativeLayout>
+
+    <android.support.percent.PercentRelativeLayout
+        android:id="@+id/popup_2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/Gray"
+        android:layout_alignParentBottom="true"
+        app:layout_heightPercent="20%"
+        app:layout_widthPercent="100%">
+        <Button
+            android:id="@+id/btn_details"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_centerVertical="true"
+            android:background="@drawable/selector_btn_popup"
+            android:layout_toLeftOf="@+id/btn_delete"
+            android:padding="10dp"
+            android:text="详细信息"
+            android:textSize="20sp"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="20%" />
+        <TextView
+            android:id="@+id/text_details"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_toRightOf="@+id/btn_details"
+            android:padding="10dp"
+            android:text="图片大小: "
+            android:textSize="10sp"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="30%"
+            android:visibility="gone"/>
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/selector_btn_popup"
+            android:padding="10dp"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:textSize="20sp"
+            android:text="删除"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="20%" />
+
+        <android.support.percent.PercentRelativeLayout
+
+            android:id="@+id/text_pic_details"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_toRightOf="@+id/btn_details"
+            android:background="@color/LightSalmon"
+            app:layout_heightPercent="100%"
+            app:layout_widthPercent="40%">
+
+            <TextView
+                android:id="@+id/text_pic_type"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:padding="10dp"
+                android:text="图片类型： "
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="15sp"
+                android:layout_alignParentTop="true"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="30%" />
+
+            <TextView
+                android:id="@+id/text_pic_typeContent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_toRightOf="@+id/text_pic_type"
+                android:padding="10dp"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="15sp"
+                android:layout_alignParentTop="true"
+                app:layout_heightPercent="33%"
+                app:layout_widthPercent="70%" />
+
+            <!--<TextView-->
+                <!--android:id="@+id/text_pic_date"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="0dp"-->
+                <!--android:layout_below="@+id/text_pic_name"-->
+                <!--android:padding="10dp"-->
+                <!--android:text="拍摄时间: "-->
+                <!--android:textSize="10sp"-->
+                <!--app:layout_heightPercent="33%"-->
+                <!--app:layout_widthPercent="10%" />-->
+
+            <!--<TextView-->
+                <!--android:id="@+id/text_pic_dateContent"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="0dp"-->
+                <!--android:layout_below="@+id/text_pic_nameContent"-->
+                <!--android:layout_toRightOf="@+id/text_pic_date"-->
+                <!--android:padding="10dp"-->
+                <!--android:textSize="10sp"-->
+                <!--app:layout_heightPercent="33%"-->
+                <!--app:layout_widthPercent="90%" />-->
+
+            <!--<TextView-->
+                <!--android:id="@+id/text_pic_size"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="0dp"-->
+                <!--android:layout_below="@+id/text_pic_date"-->
+                <!--android:padding="10dp"-->
+                <!--android:text="图片大小: "-->
+                <!--android:textSize="10sp"-->
+                <!--app:layout_heightPercent="33%"-->
+                <!--app:layout_widthPercent="10%" />-->
+
+            <!--<TextView-->
+                <!--android:id="@+id/text_pic_sizeContent"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="0dp"-->
+                <!--android:layout_below="@+id/text_pic_dateContent"-->
+                <!--android:layout_toRightOf="@+id/text_pic_size"-->
+                <!--android:padding="10dp"-->
+                <!--android:textSize="10sp"-->
+                <!--app:layout_heightPercent="33%"-->
+                <!--app:layout_widthPercent="90%" />-->
+
+        </android.support.percent.PercentRelativeLayout>
+    </android.support.percent.PercentRelativeLayout>
+</android.support.percent.PercentRelativeLayout>

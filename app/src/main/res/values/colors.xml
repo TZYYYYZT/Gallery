@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="MediumVioletRed">#C71585</color>
+    <color name="Gray">#808080</color>
+    <color name="SeaGreen">#2E8B57</color>
+    <color name="Orange">#FFA500</color>
+    <color name="Tan">#D2B48C</color>
+    <color name="LightSalmon">#FFA07A</color>
+    <color name="Tomato">#FF6347</color>
+    <color name="Transparent">#0000</color>
+</resources>

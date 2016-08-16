@@ -1,0 +1,44 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="@dimen/folder_list_height"
+    android:minHeight="@dimen/folder_list_minheight"
+    android:orientation="vertical"
+    android:showDividers="none"
+    android:weightSum="1.0" >
+
+    <ImageView
+        android:id="@+id/view_folder_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignParentTop="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.7"
+        android:src="@mipmap/item_folder_grid" >
+    </ImageView>
+
+    <TextView
+        android:id="@+id/list_item_folderNameView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:gravity="center_horizontal"
+        android:layout_gravity="center"
+        android:layout_weight="0.1"
+        android:ellipsize="marquee"
+        android:lines="1"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:singleLine="true"
+        android:textColor="@color/Gray"
+        android:textSize="@dimen/folder_list_foldername_textsize" />
+
+    <TextView
+        android:id="@+id/list_item_folderNumberView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:gravity="center_horizontal"
+        android:layout_gravity="center"
+        android:textColor="@color/Gray"
+        android:textSize="30dp"
+        />
+
+</LinearLayout>
