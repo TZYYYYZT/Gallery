@@ -33,6 +33,7 @@ public class FileUtils {
         File dir0 = new File("/storage");
         File dir1 = new File("/storage/external_storage");
         File dir2 = new File("/mnt/sdcard");
+
         if (dir0 != null && dir0.exists() && dir0.isDirectory()) {
             File[] files = dir0.listFiles(new MyFilenameFilter(regex_usb));
             if (files != null && files.length > 0) {

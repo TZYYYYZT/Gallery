@@ -38,8 +38,9 @@ import android.widget.ViewSwitcher;
 
 import com.bumptech.glide.Glide;
 import com.example.lenovo.gallery.R;
-import com.example.lenovo.gallery.adapter.allPicturesAdapter;
-import com.example.lenovo.gallery.adapter.folderAdapter;
+import com.example.lenovo.gallery.adapter.AllPicturesAdapter;
+import com.example.lenovo.gallery.adapter.FolderAdapter;
+import com.example.lenovo.gallery.adapter.UsbAdapter;
 import com.example.lenovo.gallery.bean.FolderBean;
 import com.example.lenovo.gallery.bean.ImageBean;
 import com.example.lenovo.gallery.utils.MyView;
@@ -47,6 +48,7 @@ import com.example.lenovo.gallery.utils.USBDbo;
 import com.example.lenovo.gallery.utils.folderDbo;
 import com.example.lenovo.gallery.utils.imageDbo;
 import com.example.lenovo.gallery.utils.myCollectionDbo;
+import com.orhanobut.logger.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,6 +56,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,16 +80,24 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
      * set usb adapter
      */
     private static final int MSG_START_SET_USB_ADAPTER = 4;
+    /**
+     * set usb image adapter
+     */
+    private static final int MSG_START_SET_USB_IMAGE_ADAPTER = 5;
     //data
     private ContentResolver resolver;
     /**
-     * 所有图片的adapter
+     * 所有图片的Adapter
      */
-    private allPicturesAdapter myImageAdapter;
+    private AllPicturesAdapter myImageAdapter;
     /**
-     * 我的相册adapter
+     * 我的相册Adapter
      */
-    private folderAdapter myFolderAdapter;
+    private FolderAdapter myFolderAdapter;
+    /**
+     * 存储设备Adapter
+     */
+    private UsbAdapter myUsbAdapter;
     /**
      * gridview list
      */
@@ -129,6 +141,8 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
     private List<FolderBean> myUsbList = new ArrayList<FolderBean>();
     private Context mContext = null;
     private byte[] mContent = null;
+    private int usbClickTag = -1;//置为1，表示已经进入设备子文件夹
+    private String ffPath = null;
     /**
      * 判断是否为文件夹
      */
@@ -217,6 +231,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
      * 存储设备
      */
     private Button btn_myStorageDevice;
+    private ImageView usbFolderImage;
     /**
      * 图片排序方式
      */
@@ -233,8 +248,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
     private File oldfile = null;
     private File newfile = null;
     private String fileType = null;
-    private String[] fileMd5 = null;
-    private String[] collectionMd5 = null;
     //文件夹
     private String folderPath = null;
     private boolean getStreamImage = true;
@@ -250,6 +263,20 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_all_pictures);
+        Logger
+                .init("TCBSoftWare")               // default tag : PRETTYLOGGER or use just init()
+                .methodCount(3)            // default 2
+                .hideThreadInfo()             // default it is shown
+                .logLevel(LogLevel.NONE);  // default : LogLevel.FULL
+//        Logger.init("TCBSoftWare");
+        Logger.d("tzyy", "hello 1");
+//        Logger.e("tzyy", "hello");
+//        Logger.w("tzyy", "hello");
+//        Logger.v("tzyy", "hello");
+//        Logger.wtf("tzyy", "hello");
+//        Logger.d("hello %s", "world");
+//        Logger.t("mytag").d("hello");
+//        Logger.json(TELECOM_SERVICE);
         //监听usb设备
         receiver = new BroadcastReceiver() {
             @Override
@@ -332,6 +359,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
     }
 
     private void initDB(String order) {
+        Logger.d("tzyy", "hello 2");
         myImageDB = new imageDbo(AllPicturesActivity.this);
         myCollectionDb = new myCollectionDbo(AllPicturesActivity.this);
         myUsbDb = new USBDbo(AllPicturesActivity.this);
@@ -350,11 +378,13 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
         myGridView.setSelection(0);
     }
 
+    private List<String> usbDeviceList;
+
     private void initUSBDB() {
         myGridView.setAdapter(null);
         myUsbList = myUsbDb.getListDataUsb();
-//       myUsbList = myUsbDb.getFolderList(false, true, order, path);
-        setDataToCtrlFolder(myUsbList);
+        usbDeviceList = myUsbDb.getListDataUsbString();
+        setDataToCtrlUsb(myUsbList, true);
         myGridView.setOnItemClickListener(gvUSBItemClickListener);
         myGridView.setSelection(0);
     }
@@ -372,7 +402,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
         mainView = (RelativeLayout) findViewById(R.id.mainView);
         myImageView = (ImageView) findViewById(R.id.imageView);
         myGridView = (GridView) findViewById(R.id.gridView);
-
+        usbFolderImage = (ImageView) findViewById(R.id.view_folder_list);
     }
 
 
@@ -397,12 +427,9 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 picSizeWidth = iBean.getImageWidth();
                 picSizeHeight = iBean.getImageHeight();
                 picPath = iBean.getImagePath();
-                Log.d("www", "delete path2222  " + picPath);
                 picType = iBean.getImageTypeSys();
                 picId = iBean.getImageId();
                 picDisplayName = iBean.getImageExpandName();
-//                Log.d("wmy", "displayname:  " + picDisplayName);
-//                Log.d("wmy", "path  " + picPath);
                 myImageView.setImageURI(Uri.parse(picPath));
                 myImageView.setVisibility(View.VISIBLE);
                 myImageViewShow = true;
@@ -424,16 +451,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                             }
                             picName = imageList.get(picPosition).getImageName();
                             picDisplayName = imageList.get(picPosition).getImageExpandName();
-                            File f = new File(newPath + "/" + picName + "." + picDisplayName);
-                            if (collection != null) {
-                                if (f.exists()) {
-                                    collection.setText("已收藏");
-                                } else {
-                                    collection.setText("收藏");
-                                }
-                            } else {
-
-                            }
 
                         } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
                             //右翻
@@ -446,18 +463,13 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                             picDisplayName = imageList.get(picPosition).getImageExpandName();
                             File f = new File(newPath + "/" + picName + "." + picDisplayName);
                             if (f.exists()) {
-//                                collection.setText("已收藏");
                             } else {
-//                                collection.setText("收藏");
                             }
                         }
-                        Log.d("fff", "Click Position:  " + picPosition);
                         ImageBean iBean = imageList.get(picPosition);
                         picPath = iBean.getImagePath();
-//                        Log.d("wmy", "path222222222" + picPath);
                         myImageViewShow = true;
 
-//                        myImageView.startAnimation(animation);
                         Glide.with(AllPicturesActivity.this).
 
                                 load(picPath).crossFade().into(myImageView);
@@ -471,32 +483,26 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
                     @Override
                     public boolean onTouch(View view, MotionEvent event) {
-                        Log.d("fff", "action:" + event.getAction());
                         switch (event.getAction()) {
 
                             case MotionEvent.ACTION_DOWN:
                                 DownX = event.getX();//float DownX
-                                Log.d("fff", "DownX:" + DownX);
                                 return true;
                             case MotionEvent.ACTION_UP:
                                 UpX = event.getX();//float DownX
-                                Log.d("fff", "UpX:" + UpX);
                                 if (UpX < DownX) {
                                     if (picPosition > 0 && picPosition <= imageList.size() - 1) {
                                         --picPosition;
-//                                Log.d("fff", "position11:" + picPosition);
                                     } else if (picPosition == 0) {
                                         picPosition = imageList.size() - 1;
                                     }
                                 } else if (DownX < UpX) {
                                     if (picPosition >= 0 && picPosition < imageList.size() - 1) {
                                         ++picPosition;
-//                                Log.d("fff", "position22:" + picPosition);
                                     } else if (picPosition == imageList.size() - 1) {
                                         picPosition = 0;
                                     }
                                 }
-                                Log.d("fff", "Touch Position:  " + picPosition);
                                 ImageBean iBean = imageList.get(picPosition);
                                 picPath = iBean.getImagePath();
                                 myImageViewShow = true;
@@ -517,7 +523,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
 
     private void setDataToCtrl(List<ImageBean> List) {
-        myImageAdapter = new allPicturesAdapter(
+        myImageAdapter = new AllPicturesAdapter(
                 AllPicturesActivity.this, List);
         myImageAdapter.notifyDataSetChanged();
         myGridView.setAdapter(myImageAdapter);
@@ -527,9 +533,19 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
      * “我的相册”adapter
      */
     private void setDataToCtrlFolder(List<FolderBean> List) {
-        myFolderAdapter = new folderAdapter(AllPicturesActivity.this, List, isFolder);
+
+        myFolderAdapter = new FolderAdapter(AllPicturesActivity.this, List, isFolder);
         myFolderAdapter.notifyDataSetChanged();
         myGridView.setAdapter(myFolderAdapter);
+    }
+
+    /**
+     * “USB”adapter
+     */
+    private void setDataToCtrlUsb(List<FolderBean> List, boolean flag) {
+        myUsbAdapter = new UsbAdapter(AllPicturesActivity.this, List, isFolder);
+        myUsbAdapter.setUSBDeviceFlag(flag);
+        myGridView.setAdapter(myUsbAdapter);
     }
 
     Handler myHandler = new Handler() {
@@ -549,12 +565,12 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                     myGridView.requestFocus();
                     break;
                 case MSG_START_SET_USB_ADAPTER:
+                    usbClickTag = 1;
                     myGridView.setAdapter(null);
-                    Log.d("www", "usbImageList:" + usbImageList.size());
-                    setDataToCtrlFolder(usbImageList);
-                    myFolderAdapter.notifyDataSetChanged();
-                    Log.d("www", "mmmmm:" + myGridView.getCount());
+                    isFolder = false;
+                    setDataToCtrlUsb(myUsbList, false);
                     break;
+
                 default:
                     break;
             }
@@ -568,7 +584,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
         switch (view.getId()) {
 
             case R.id.titleBar:
-//                Log.d("wmy", "isFolder==  "+isFolder);
                 //按时间排序
 
                 if (!isFolder) {
@@ -618,21 +633,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                     }
                 }
                 break;
-            case R.id.btn_myCollection:
-                tag = 2;
-                btn_folder.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
-                btn_myCollection.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar2));
-                btn_myStorageDevice.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
-                btn_allImage.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
-                isLeftBar = true;
-                isFolder = false;
-                initDB(order);
-                imageList = imageList2;
-//                collectionMd5=getFileMd5(imageList);//获取收藏图片MD5
-                myGridView.setAdapter(null);
-                setDataToCtrl(imageList);
 
-                break;
             case R.id.btn_allPictures:
                 tag = 0;
                 btn_folder.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
@@ -644,6 +645,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 myGridView.setAdapter(null);
                 initDB(order);
                 setDataToCtrl(imageList1);
+                initCtrl();
                 myGridView.setSelection(0);
 //                initCtrl();
                 break;
@@ -655,9 +657,23 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 btn_allImage.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
                 isLeftBar = true;
                 isFolder = true;
-                myGridView.setAdapter(null);
                 initFolderDB();
                 myGridView.setSelection(0);
+                break;
+            case R.id.btn_myCollection:
+                tag = 2;
+                btn_folder.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
+                btn_myCollection.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar2));
+                btn_myStorageDevice.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
+                btn_allImage.setBackground(getResources().getDrawable(R.drawable.selector_btn_leftbar));
+                isLeftBar = true;
+                isFolder = false;
+//                initDB(order);
+                imageList2 = myCollectionDb.getImageListFromSystem(order, order);
+                imageList = imageList2;
+                myGridView.setAdapter(null);
+                setDataToCtrl(imageList);
+                initCtrl();
                 break;
             case R.id.btn_myStorage:
                 tag = 3;
@@ -688,7 +704,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
             if (isFolder) {
 
                 FolderBean fBean = folderList.get(position);
-//                Log.d("www", "position11111" + position);
                 isLeftBar = false;
                 isFolder = false;
                 folderPath = fBean.getFolderPath();
@@ -696,16 +711,12 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 new Thread(getfolderdataRunnable).start();
             } else {
                 isLeftBar = false;
-//                FolderBean fBean = folderImageList.get(position);
-//                Log.d("www", "position22222:   " + position);
 
                 FolderBean SBean = folderImageList.get(position);
                 picPath = SBean.getImagePath();
-//                Log.d("www","picPath0000:  "+picPath);
                 currentItemFocus = position;
-//                Log.d("wmy","position in AllPicturesActivity:"+currentItemFocus);
 
-                picName = SBean.getImageDate();
+                picName = SBean.getImageName();
                 picDate = SBean.getImageDate();
                 picSizeWidth = SBean.getImageWidth();
                 picSizeHeight = SBean.getImageHeight();
@@ -723,7 +734,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 myImageView.setOnKeyListener(new View.OnKeyListener() {
                     @Override
                     public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-//                        Log.d("wmy", "dddddddddddddddddddd   ");
                         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
                             if (currentItemFocus > 0 && currentItemFocus <= folderImageList.size() - 1) {
                                 --currentItemFocus;
@@ -739,10 +749,8 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                         }
                         FolderBean iBean = folderImageList.get(currentItemFocus);
                         picPath = iBean.getImagePath();
-//                        Log.d("wmy", "path222222222" + picPath);
                         myImageViewShow = true;
 
-//                        myImageView.startAnimation(animation);
                         Glide.with(AllPicturesActivity.this).
 
                                 load(folderImageList.get(currentItemFocus).imagePath).into(myImageView);
@@ -758,32 +766,26 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
                     @Override
                     public boolean onTouch(View view, MotionEvent event) {
-                        Log.d("fff", "action:" + event.getAction());
                         switch (event.getAction()) {
 
                             case MotionEvent.ACTION_DOWN:
                                 DownX = event.getX();//float DownX
-                                Log.d("fff", "DownX:" + DownX);
                                 return true;
                             case MotionEvent.ACTION_UP:
                                 UpX = event.getX();//float DownX
-                                Log.d("fff", "UpX:" + UpX);
                                 if (UpX < DownX) {
                                     if (currentItemFocus > 0 && currentItemFocus <= folderImageList.size() - 1) {
                                         --currentItemFocus;
-//                                Log.d("fff", "position11:" + picPosition);
                                     } else if (currentItemFocus == 0) {
                                         currentItemFocus = folderImageList.size() - 1;
                                     }
                                 } else if (DownX < UpX) {
                                     if (currentItemFocus >= 0 && currentItemFocus < folderImageList.size() - 1) {
                                         ++currentItemFocus;
-//                                Log.d("fff", "position22:" + picPosition);
                                     } else if (currentItemFocus == folderImageList.size() - 1) {
                                         currentItemFocus = 0;
                                     }
                                 }
-                                Log.d("fff", "Touch Position:  " + currentItemFocus);
                                 FolderBean iBean = folderImageList.get(currentItemFocus);
                                 picPath = iBean.getImagePath();
                                 myImageViewShow = true;
@@ -802,80 +804,94 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
             }
         }
     };
+    /**
+     * usb点击响应
+     */
     private AdapterView.OnItemClickListener gvUSBItemClickListener = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> adapterView, View arg1,
                                 int position, long arg3) {
+            FolderBean fBean = myUsbList.get(position);
+
+            folderPath = fBean.getFolderPath();
+//        }
+
+            File file = new File(folderPath);
+
+            if (file.exists())
+                isFolder = file.isDirectory();
+
             if (isFolder) {
-                FolderBean fBean = myUsbList.get(position);
-                isLeftBar = false;
-                isFolder = false;
-                folderPath = fBean.getFolderPath();
-                Log.d("HYP","folderPath:"+folderPath);
+                ffPath = folderPath;
+//            ffPath=file.getParentFile().getAbsolutePath();//获取上一级路径
+                Log.d("www", "上一级路径ffPath111：" + ffPath);
                 myGridView.setAdapter(null);
                 new Thread(getUSBfolderdataRunnable).start();
-
+                isLeftBar = false;
             } else {
+                ffPath = file.getParentFile().getAbsolutePath();
+                Log.d("www", "上一级路径ffPath222：" + ffPath);
+                usbClickTag = -1;
                 isLeftBar = false;
 
-                long[] playIdList = new long[usbImageList.size()];
+                long[] playIdList = new long[myUsbList.size()];
 
-                for (int i = 0; i < usbImageList.size(); i++) {
-
-                    playIdList[i] = usbImageList.get(i).getImageId();
+                for (int i = 0; i < myUsbList.size(); i++) {
+                    File file1 = new File(myUsbList.get(i).imagePath);
+                    if (file1.exists())
+                        isFolder = file.isDirectory();
+                    if (!isFolder) {
+                    }
+                    playIdList[i] = myUsbList.get(i).getImageId();
                 }
-                FolderBean SBean = usbImageList.get(position);
+                FolderBean SBean = myUsbList.get(position);
 
 
                 picPath = SBean.getImagePath();
-                Log.d("www", "picPath:  " + picPath);
+                File file1 = new File(picPath);
+                if (file1.exists())
+                    isFolder = file1.isDirectory();
                 currentItemFocus = position;
-//                Log.d("wmy","position in AllPicturesActivity:"+currentItemFocus);
 
-                picName = SBean.getImageDate();
-                Log.d("www", "picName:  " + picName);
+                picName = SBean.getImageName();
                 picDate = SBean.getImageDate();
-//                picDate=strToDate(picDate);
                 picSizeWidth = SBean.getImageWidth();
                 picSizeHeight = SBean.getImageHeight();
                 picType = SBean.getImageTypeSys();
                 picId = SBean.getImageId();
                 picDisplayName = SBean.getImageExpandName();
-//                Log.d("wmy", "displayname:  " + picDisplayName);
-//                Log.d("wmy", "path  " + picPath);
                 myImageView.setImageURI(Uri.parse(picPath));
                 myImageView.setVisibility(View.VISIBLE);
                 leftBar.setVisibility(View.INVISIBLE);
                 mainView.setVisibility(View.INVISIBLE);
                 myImageViewShow = true;
                 Glide.with(AllPicturesActivity.this).
-                        load(usbImageList.get(position).imagePath).into(myImageView);
+                        load(myUsbList.get(position).imagePath).into(myImageView);
                 myImageView.requestFocus();
+
                 myImageView.setOnKeyListener(new View.OnKeyListener() {
                     @Override
                     public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-///                        Log.d("wmy", "dddddddddddddddddddd   ");
+
                         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                            if (currentItemFocus > 0 && currentItemFocus <= usbImageList.size() - 1) {
+                            if (currentItemFocus > 0 && currentItemFocus <= myUsbList.size() - 1) {
                                 --currentItemFocus;
                             } else if (currentItemFocus == 0) {
-                                currentItemFocus = usbImageList.size() - 1;
+                                currentItemFocus = myUsbList.size() - 1;
                             }
                         } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                            if (currentItemFocus >= 0 && currentItemFocus < usbImageList.size() - 1) {
+                            if (currentItemFocus >= 0 && currentItemFocus < myUsbList.size() - 1) {
                                 ++currentItemFocus;
-                            } else if (currentItemFocus == usbImageList.size() - 1) {
+                            } else if (currentItemFocus == myUsbList.size() - 1) {
                                 currentItemFocus = 0;
                             }
                         }
-                        FolderBean iBean = usbImageList.get(currentItemFocus);
+                        FolderBean iBean = myUsbList.get(currentItemFocus);
                         picPath = iBean.getImagePath();
-//                        Log.d("wmy", "path222222222" + picPath);
                         myImageViewShow = true;
 
-//                        myImageView.startAnimation(animation);
                         Glide.with(AllPicturesActivity.this).
 
-                                load(usbImageList.get(currentItemFocus).imagePath).into(myImageView);
+                                load(myUsbList.get(currentItemFocus).imagePath).into(myImageView);
                         return false;
                     }
 
@@ -891,33 +907,28 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
                             case MotionEvent.ACTION_DOWN:
                                 DownX = event.getX();//float DownX
-                                Log.d("fff", "DownX:" + DownX);
                                 return true;
                             case MotionEvent.ACTION_UP:
                                 UpX = event.getX();//float DownX
-                                Log.d("fff", "UpX:" + UpX);
                                 if (UpX < DownX) {
-                                    if (currentItemFocus > 0 && currentItemFocus <= usbImageList.size() - 1) {
+                                    if (currentItemFocus > 0 && currentItemFocus <= myUsbList.size() - 1) {
                                         --currentItemFocus;
-//                                Log.d("fff", "position11:" + picPosition);
                                     } else if (currentItemFocus == 0) {
-                                        currentItemFocus = usbImageList.size() - 1;
+                                        currentItemFocus = myUsbList.size() - 1;
                                     }
                                 } else if (DownX < UpX) {
-                                    if (currentItemFocus >= 0 && currentItemFocus < usbImageList.size() - 1) {
+                                    if (currentItemFocus >= 0 && currentItemFocus < myUsbList.size() - 1) {
                                         ++currentItemFocus;
-//                                Log.d("fff", "position22:" + picPosition);
-                                    } else if (currentItemFocus == usbImageList.size() - 1) {
+                                    } else if (currentItemFocus == myUsbList.size() - 1) {
                                         currentItemFocus = 0;
                                     }
                                 }
-                                Log.d("fff", "Touch Position:  " + currentItemFocus);
-                                FolderBean iBean = usbImageList.get(currentItemFocus);
+                                FolderBean iBean = myUsbList.get(currentItemFocus);
                                 picPath = iBean.getImagePath();
                                 myImageViewShow = true;
                                 Glide.with(AllPicturesActivity.this).
 
-                                        load(usbImageList.get(currentItemFocus).imagePath).crossFade().into(myImageView);
+                                        load(myUsbList.get(currentItemFocus).imagePath).crossFade().into(myImageView);
                                 bitmapOrg = iBean.getImage();
                                 return false;
                             default:
@@ -938,6 +949,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
         View contentView = LayoutInflater.from(mContext).inflate(
                 R.layout.popu_window1, null);
+        PercentRelativeLayout pop_title = (PercentRelativeLayout) contentView.findViewById(R.id.text_pic_information);
         imageName = (TextView) contentView.findViewById(R.id.text_pic_nameContent);
         imageDate = (TextView) contentView.findViewById(R.id.text_pic_dateContent);
         imageSizeWidth = (TextView) contentView.findViewById(R.id.text_pic_sizeContent);
@@ -948,16 +960,38 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
         pop_details = (Button) contentView.findViewById(R.id.btn_details);
         pop_delete = (Button) contentView.findViewById(R.id.btn_delete);
         collection = (Button) contentView.findViewById(R.id.btn_collection);
-        File f = new File(newPath + "/" + picName + "." + picDisplayName);
-        if (f.exists()) {
-            collection.setText("已收藏");
+
+        if (tag == 2) {
+            collection.setBackgroundColor(getResources().getColor(R.color.Gray));
+            collection.setText("");
+            pop_delete.setFocusable(true);
+            pop_delete.requestFocus();
         } else {
-            collection.setText("收藏");
+            /**
+             * 判斷文件是否被收藏
+             */
+            Boolean fIsExist = false;
+            if (imageList2 != null) {
+                for (int i = 0; i < imageList2.size(); i++) {
+                    Log.d("www", "f.exists    " + getFileMD5(picPath));
+                    Log.d("www", "f.exists!!!!" + getFileMD5(imageList2.get(i).getImagePath()));
+                    if (getFileMD5(picPath).equals(getFileMD5(imageList2.get(i).getImagePath()))) {
+                        fIsExist = true;
+                        Log.d("www", "fIsExist    ");
+                        continue;
+                    }
+                }
+            }
+            if (fIsExist) {
+                collection.setText("已收藏");
+            } else {
+
+                collection.setText("收藏");
+            }
         }
         imageName.setText(picName);
         imageDate.setText(picDate);
         imageType.setText(picType);
-//        Log.d("wmy", "picSizeWidthpop:" + picSizeWidth);
         imageSizeWidth.setText("" + picSizeWidth + " " + picSizeHeight);
 //实例化popup窗口
         popupWindow = new PopupWindow(contentView, getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
@@ -995,18 +1029,13 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                     deletePictures(p);
                     collection.setText("收藏");
                 } else {
+                    Log.d("www", "coll " + picPath);
+                    Log.d("www", "collect   " + newPath);
                     copyFile(picPath, newPath);
                     collection.setText("已收藏");
                 }
-//                copyFile(picPath, newPath);
-                File f = new File(newPath + "/" + picName + "." + picDisplayName);
-                if (f.exists()) {
-                    collection.setText("已收藏");
-                } else {
 
-                    collection.setText("收藏");
-                }
-
+//
             }
         });
 
@@ -1024,15 +1053,12 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 switch (which) {
                     case Dialog.BUTTON_POSITIVE:
                         deletePictures(picPath);
-//                        initDB("DESC");
                         popupWindow.dismiss();
                         myImageView.setVisibility(View.GONE);
 
                         leftBar.setVisibility(View.VISIBLE);
                         mainView.setVisibility(View.VISIBLE);
                         myImageViewShow = false;
-//                        new Thread(getdataRunnable).start();
-//                        initCtrl();
                         break;
                     case Dialog.BUTTON_NEGATIVE:
                         dialog.dismiss();
@@ -1058,11 +1084,9 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
      */
     public void deletePictures(String path) {
         File file = new File(path);
-        Log.d("wmy", "file:    " + file);
         if (file.exists()) {
             file.delete();
             ContentResolver resolver = getContentResolver();
-            Log.d("www", "delete path!!!   " + path);
             resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + "=?", new String[]{path});
             initDB(order);
             if (tag == 0) {
@@ -1070,7 +1094,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
             } else if (tag == 2) {
                 imageList = imageList2;
             }
-//            Log.d("wmy", "listsize2   "+imageList.size());
             new Thread(getdataRunnable).start();
             initCtrl();
         } else {
@@ -1095,8 +1118,13 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
             oldfile = new File(oldPath);
             if (oldfile.exists()) { //文件存在时
                 InputStream inStream = new FileInputStream(oldPath); //读入原文件
+//                picDisplayName="jpg";
                 File f = new File(newPath + "/" + picName + "." + picDisplayName);
-                if (!f.exists()) {
+                Log.d("www", "www !f.exists() " + !f.exists());
+                Log.d("www", "www picName " + picName);
+                Log.d("www", "www picDisplayName " + picDisplayName);
+                if (!f.exists() || picName == null) {
+
                     newPath2 = newPath + "/" + picName + "." + picDisplayName;
                     FileOutputStream fs = new FileOutputStream(newPath2);
                     byte[] buffer = new byte[512];
@@ -1110,7 +1138,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                     inStream.close();
                     myHandler.sendEmptyMessage(MSG_COPY_FILE_FINISHED);
                 } else {
-//                    deletePictures(newPath2);
                     Toast.makeText(AllPicturesActivity.this, "!!!", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -1137,6 +1164,7 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
                 int length = imageList.size();
                 int i = 0;
+
 //                Log.d("wmy", "  length :" +  length );
                 Log.d("wmy", "  length :" + length);
                 while (i < length) {
@@ -1168,8 +1196,6 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
         @Override
         public void run() {
             folderImageList = myFolderDb.getStreamList(folderPath, true, false, order, newPath);
-//            Log.d("www", "folder list size:" + folderImageList.size());
-//            Log.d("www", "线程folderImageList:" + folderImageList);
             int id = -1;
             int length = folderImageList.size();
             int i = 0;
@@ -1177,13 +1203,9 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
             while (i < length) {
 
                 id = folderImageList.get(i).getImageId();
-//                id=212;
                 Bitmap bitmap = myImageDB.getImage(id);
-                Log.d("wmy", "bitmap :::" + bitmap);
                 folderImageList.get(i).setImage(bitmap);
 
-                Log.d("www", "picPath2:  " + folderImageList.get(i).getImagePath());
-//                Log.d("wmy", "folder image list:" +  folderImageList.get(i).getStreamImage());
                 i++;
 
             }
@@ -1197,25 +1219,20 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
 
         @Override
         public void run() {
-            usbImageList = myUsbDb.getStreamList(folderPath, true, false, order);
-            Log.d("www", "usbimagelist:" + usbImageList);
+            myUsbList = myUsbDb.getFolderList(true, true, order, folderPath);
             int id = -1;
-            int length = usbImageList.size();
+            int length = myUsbList.size();
             getStreamImage = true;
-            Log.d("www", "length:" + length);
             for (int i = 0; i < length; i++) {
-                id = usbImageList.get(i).getImageId();
-                Log.d("www", "qqqid:" + id);
-                Bitmap bitmap = myUsbDb.getVideoImage(id);
-                Log.d("www", "bitmap:" + bitmap);
-                usbImageList.get(i).setImage(bitmap);
+                id = myUsbList.get(i).getImageId();
+                folderPath = myUsbList.get(i).getImagePath();
+                Bitmap bitmap = myImageDB.getImage(id);
+                myUsbList.get(i).setImage(bitmap);
             }
-            Log.d("www", "length2222:" + length);
             myHandler.sendEmptyMessage(MSG_START_SET_USB_ADAPTER);
         }
     };
 
-    //    }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -1229,13 +1246,26 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
                 isFolder = true;
                 initFolderDB();
                 myGridView.requestFocus();
+            } else if (tag == 3) {
+                File file = new File(ffPath);
+                ffPath = file.getParentFile().getAbsolutePath();//获取上一级路径
+                isFolder = true;
+                myGridView.setAdapter(null);
+
+                myUsbList = myUsbDb.getFolderList(true, true, order, ffPath);
+                if (usbDeviceList.contains(ffPath))
+                    setDataToCtrlUsb(myUsbList, false);
+                else
+                    setDataToCtrlUsb(myUsbList, true);
+                myGridView.setOnItemClickListener(gvUSBItemClickListener);
+                myGridView.setSelection(0);
+                myGridView.requestFocus();
             } else {
                 finish();
             }
         } else if (keyCode == KeyEvent.KEYCODE_MENU) {
             if (myImageViewShow) {
                 showPopupWindow1(picName);
-//                Log.d("wmy", "picName!!!!!!!!" + picName);
             }
         } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
 
@@ -1354,6 +1384,37 @@ public class AllPicturesActivity extends Activity implements ViewSwitcher.ViewFa
     private void scanfile(File f) {
         this.newfile = f;
         mediaScanConn.connect();
+    }
+
+    /**
+     * 获取单个文件的MD5值
+     *
+     * @param path
+     * @return
+     */
+
+    public static String getFileMD5(String path) {
+        File file = new File(path);
+        if (!file.isFile()) {
+            return null;
+        }
+        MessageDigest digest = null;
+        FileInputStream in = null;
+        byte buffer[] = new byte[1024];
+        int len;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            in = new FileInputStream(file);
+            while ((len = in.read(buffer, 0, 1024)) != -1) {
+                digest.update(buffer, 0, len);
+            }
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        BigInteger bigInt = new BigInteger(1, digest.digest());
+        return bigInt.toString(16);
     }
 
 }

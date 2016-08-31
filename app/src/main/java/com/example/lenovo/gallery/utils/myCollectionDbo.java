@@ -12,6 +12,9 @@ import android.util.Log;
 import com.example.lenovo.gallery.bean.ImageBean;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +85,7 @@ public class myCollectionDbo {
             int height = cursor.getInt(cursor.getColumnIndex(Images.Media.HEIGHT));
             String imageType = cursor.getString(cursor.getColumnIndex(Images.Media.MIME_TYPE));
             vBean.imageId = imageID;
-            vBean.imageName = imageName;
+
             vBean.imageNameNonType = imageName.substring(0, index);
             String expandName = imageName.substring(index + 1);
             vBean.imageExpandName = expandName;
@@ -91,6 +94,7 @@ public class myCollectionDbo {
             vBean.imageTypeSys = imageType;
             // 目录路径
             vBean.imagePath = imagePath;
+            vBean.imageName = getFileMD5( imagePath);
             // 日期
             String imageDate = cursor.getString(cursor
                     .getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED));
@@ -106,7 +110,36 @@ public class myCollectionDbo {
 
         return myList;
     }
+    /**
+     * 获取单个文件的MD5值
+     *
+     * @param path
+     * @return
+     */
 
+    public static String getFileMD5(String path) {
+        File file = new File(path);
+        if (!file.isFile()) {
+            return null;
+        }
+        MessageDigest digest = null;
+        FileInputStream in = null;
+        byte buffer[] = new byte[1024];
+        int len;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            in = new FileInputStream(file);
+            while ((len = in.read(buffer, 0, 1024)) != -1) {
+                digest.update(buffer, 0, len);
+            }
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        BigInteger bigInt = new BigInteger(1, digest.digest());
+        return bigInt.toString(16);
+    }
     /**
      * 功能：<获取缩略图><br>
      * 编码作者：WangMengyao<br>
@@ -182,7 +215,6 @@ public class myCollectionDbo {
         // 重新访问 ImageList, 更新 imageList
         List<ImageBean> imageList = new ArrayList<ImageBean>();
         imageList = getImageListFromSystem(null, order);
-//      imageList = getImageList(true);
         if (null == imageList) {
             return null;
         }

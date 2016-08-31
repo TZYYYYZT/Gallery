@@ -3,21 +3,11 @@ package com.example.lenovo.gallery.bean;
 import android.graphics.Bitmap;
 
 public class FolderBean {
-    public String imageIcon;
     public String name  = "";
-    public String description = "";
-
-    public boolean isFolder() {
-        return isFolder;
-    }
-
-    public boolean isFolder;
-
     public String folderName;
     public String folderPath;
     public int imageNumber;
     public boolean folderUpdate;
-
     public boolean check = false;
     /**
      * 节目日期

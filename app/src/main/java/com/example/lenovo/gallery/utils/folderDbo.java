@@ -166,9 +166,6 @@ public class folderDbo {
             vBean.imageNameNonType = videoName.substring(0, index);
             String expandName = videoName.substring(index + 1);
             vBean.imageExpandName = expandName;
-            if (expandName.contains("ts")) {
-
-            }
 
 
             // 目录名称
@@ -447,6 +444,7 @@ public class folderDbo {
                 sBean = new FolderBean();
                 sBean.imageId = vBean.getImageId();
                 sBean.imageName = vBean.getImageNameNonType();
+                sBean.imageExpandName=vBean.getImageExpandName();
                 sBean.imagePath = vBean.getImagePath();
                 if (  sBean.imagePath.contains(newPath)) {
                     continue;

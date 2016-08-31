@@ -62,7 +62,6 @@ public class imageDbo {
 
 			/* 验证文件有效 */
             File file = new File(imagePath);
-//            Log.d("HYP", "file1:" + file.toString());
             if (file == null)
                 continue;
             // ID
@@ -94,10 +93,6 @@ public class imageDbo {
             vBean.imageDate = imageDate;
 
 
-//            if (key != null) {
-//                cursor.close();
-//                return null;
-//            }
             imageNumber++;
 
             myList.add(vBean);
@@ -187,7 +182,6 @@ public class imageDbo {
         // 重新访问 ImageList, 更新 imageList
         List<ImageBean> imageList = new ArrayList<ImageBean>();
         imageList = getImageListFromSystem(null, order);
-//      imageList = getImageList(true);
         if (null == imageList) {
             return null;
         }

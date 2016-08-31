@@ -16,11 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class allPicturesAdapter extends BaseAdapter {
+public class AllPicturesAdapter extends BaseAdapter {
     private Context context;
     private List<ImageBean> imageList = new ArrayList<ImageBean>();
 
-    public allPicturesAdapter(Context context, List<ImageBean> imageList) {
+    public AllPicturesAdapter(Context context, List<ImageBean> imageList) {
 
         this.context = context;
         if (null != imageList) {
@@ -80,7 +80,6 @@ public class allPicturesAdapter extends BaseAdapter {
             holder = (MyViewHolder) convertView.getTag();
         }
         ImageBean streamBin = (ImageBean) getItem(position);
-//        holder.ImageIV.setImageBitmap(streamBin.getImage());
       holder.nameTextView.setText(streamBin.imageName);
         Glide
                 .with(context)
